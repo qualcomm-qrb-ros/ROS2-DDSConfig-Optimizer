@@ -61,9 +61,11 @@ class BenchmarkLaunchError(Exception):
 
 def run_benchmark(
     benchmark_config: BenchmarkConfig,
-    fastdds_config_path: Path,
+    config_path: Path,
     epoch_dir: Path,
     iteration: int,
+    profiles_env_var: str = "FASTRTPS_DEFAULT_PROFILES_FILE",
+    rmw_implementation: str = "rmw_fastrtps_cpp",
     timeout: int = DEFAULT_BENCHMARK_TIMEOUT,
 ) -> Tuple[Path, Optional[PipelineTopology]]:
     """
@@ -82,9 +84,11 @@ def run_benchmark(
 
     Args:
         benchmark_config: Benchmark configuration (test file path, launch command).
-        fastdds_config_path: Path to the FastDDS XML config to use.
+        config_path: Path to the DDS XML config to use.
         epoch_dir: Epoch directory where benchmark_result.json will be written.
         iteration: Current iteration number (used for logging only).
+        profiles_env_var: Env var the DDS vendor reads for its config file.
+        rmw_implementation: RMW implementation ROS2 must use.
         timeout: Maximum seconds to wait for the benchmark to complete.
 
     Returns:
@@ -101,8 +105,8 @@ def run_benchmark(
     if not test_file.exists():
         raise FileNotFoundError(f"Benchmark test file not found: {test_file}")
 
-    if not fastdds_config_path.exists():
-        raise FileNotFoundError(f"FastDDS config file not found: {fastdds_config_path}")
+    if not config_path.exists():
+        raise FileNotFoundError(f"DDS config file not found: {config_path}")
 
     # Prepare epoch directory
     epoch_dir.mkdir(parents=True, exist_ok=True)
@@ -113,16 +117,18 @@ def run_benchmark(
 
     # Build the environment for the subprocess
     env = _build_benchmark_env(
-        fastdds_config_path=fastdds_config_path,
+        config_path=config_path,
         log_folder=epoch_dir,
         log_file_name=result_filename,
+        profiles_env_var=profiles_env_var,
+        rmw_implementation=rmw_implementation,
     )
 
     # Build the command
     cmd = [benchmark_config.launch_command, str(test_file)]
 
     logger.info(f"Running benchmark (epoch {iteration}): {' '.join(cmd)}")
-    logger.info(f"  FastDDS config: {fastdds_config_path}")
+    logger.info(f"  DDS config: {config_path}")
     logger.info(f"  Expected result: {result_json_path}")
 
     start_time = time.time()
@@ -259,35 +265,27 @@ def run_benchmark(
 
 
 def _build_benchmark_env(
-    fastdds_config_path: Path,
+    config_path: Path,
     log_folder: Path,
     log_file_name: str,
+    profiles_env_var: str = "FASTRTPS_DEFAULT_PROFILES_FILE",
+    rmw_implementation: str = "rmw_fastrtps_cpp",
 ) -> dict:
     """
     Build the environment dictionary for the benchmark subprocess.
 
     Sets:
-    - FASTRTPS_DEFAULT_PROFILES_FILE: FastDDS config to use
-    - ROS2_BENCHMARK_OVERRIDE_LOG_FOLDER: Where to write results
-    - ROS2_BENCHMARK_OVERRIDE_LOG_FILE_NAME: Result filename (without .json)
-
-    Args:
-        fastdds_config_path: Path to the FastDDS XML config.
-        log_folder: Directory for benchmark output.
-        log_file_name: Base filename for the result JSON (without extension).
-
-    Returns:
-        Environment dictionary for subprocess.run().
+    - <profiles_env_var>: DDS config file the vendor reads
+      (FASTRTPS_DEFAULT_PROFILES_FILE or CYCLONEDDS_URI)
+    - RMW_IMPLEMENTATION: the RMW ROS2 must use (essential for CycloneDDS to
+      read the config at all)
+    - ROS2_BENCHMARK_OVERRIDE_LOG_FOLDER / _FILE_NAME: result location
     """
     env = os.environ.copy()
-
-    # Set FastDDS config
-    env["FASTRTPS_DEFAULT_PROFILES_FILE"] = str(fastdds_config_path.resolve())
-
-    # Set ros2_benchmark output location
+    env[profiles_env_var] = str(config_path.resolve())
+    env["RMW_IMPLEMENTATION"] = rmw_implementation
     env[ROS2_BENCHMARK_LOG_FOLDER_ENV] = str(log_folder.resolve())
     env[ROS2_BENCHMARK_LOG_FILE_ENV] = log_file_name
-
     return env
 
 
