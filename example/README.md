@@ -39,7 +39,7 @@ source install/setup.bash
 cd $OPTIMIZER_ROOT
 export LLM_API_KEY=<your-api-key>
 
-uv run fastdds-optimizer run \
+uv run dds-optimizer run \
     --requirements example/user_requirements.xml \
     --initial-config example/fast-dds-latency-param.xml
 ```

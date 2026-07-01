@@ -71,7 +71,7 @@ def create_app():
     @app.get("/health")
     def health_check():
         """Health check endpoint."""
-        return {"status": "ok", "service": "fastdds-optimizer-dashboard"}
+        return {"status": "ok", "service": "dds-optimizer-dashboard"}
 
     # -----------------------------------------------------------------------
     # Sessions API

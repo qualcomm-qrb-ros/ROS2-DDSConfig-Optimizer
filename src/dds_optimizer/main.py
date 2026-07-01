@@ -26,7 +26,7 @@ def cmd_run(args: argparse.Namespace) -> int:
     Run the optimization workflow.
 
     Parses user_requirements.xml, collects environment, runs the LLM-driven
-    optimization loop, and saves the best FastDDS configuration found.
+    optimization loop, and saves the best DDS configuration found.
 
     Args:
         args: Parsed CLI arguments with 'requirements' and optional 'session_id'.
@@ -41,7 +41,7 @@ def cmd_run(args: argparse.Namespace) -> int:
         logger.error(f"Requirements file not found: {requirements_path}")
         return 1
 
-    logger.info(f"Starting FastDDS optimization with requirements: {requirements_path}")
+    logger.info(f"Starting DDS optimization with requirements: {requirements_path}")
 
     initial_config = getattr(args, "initial_config", None)
     if initial_config and not Path(initial_config).exists():
@@ -55,11 +55,16 @@ def cmd_run(args: argparse.Namespace) -> int:
             initial_config_path=initial_config,
         )
 
+        from .backends.registry import get_backend
+        export_var = "FASTRTPS_DEFAULT_PROFILES_FILE"
+        if session.requirements is not None:
+            export_var = get_backend(session.requirements.dds_implementation).profiles_env_var
+
         if session.success:
             print(f"\n✓ Optimization successful!")
             print(f"  Final config: {session.final_config_path}")
             print(f"\nTo apply the optimized configuration:")
-            print(f"  export FASTRTPS_DEFAULT_PROFILES_FILE={session.final_config_path}")
+            print(f"  export {export_var}={session.final_config_path}")
             return 0
         else:
             print(f"\n⚠ Optimization completed (requirements not fully met).")
@@ -96,7 +101,7 @@ def cmd_dashboard(args: argparse.Namespace) -> int:
         port = getattr(args, "port", 5000)
         host = getattr(args, "host", "0.0.0.0")
 
-        print(f"\nStarting FastDDS Optimizer Dashboard...")
+        print(f"\nStarting DDS Optimizer Dashboard...")
         print(f"  URL: http://localhost:{port}")
         print(f"  Press Ctrl+C to stop\n")
 
@@ -116,7 +121,7 @@ def create_parser() -> argparse.ArgumentParser:
     """Create the CLI argument parser."""
     parser = argparse.ArgumentParser(
         prog="dds-optimizer",
-        description="AI-driven FastDDS configuration optimizer for ROS2",
+        description="AI-driven DDS configuration optimizer for ROS2 (FastDDS + CycloneDDS)",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -142,7 +147,7 @@ Examples:
     # --- run command ---
     run_parser = subparsers.add_parser(
         "run",
-        help="Run the FastDDS optimization workflow",
+        help="Run the DDS optimization workflow",
     )
     run_parser.add_argument(
         "--requirements", "-r",
@@ -161,7 +166,7 @@ Examples:
         metavar="XML_FILE",
         dest="initial_config",
         help=(
-            "Path to the initial FastDDS XML config to use for epoch 1. "
+            "Path to the initial DDS XML config to use for epoch 1. "
             "The optimizer benchmarks this config, then uses LLM feedback to improve it "
             "from epoch 2 onward."
         ),

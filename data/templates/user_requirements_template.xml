@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <optimization_requirements>
+    <!--
+        DDS implementation to optimize: "fastdds" (default) or "cyclonedds".
+        Selects the backend, knowledge base, config generator, and RMW.
+    -->
+    <dds_implementation>fastdds</dds_implementation>
+
     <benchmark>
         <test_file>/path/to/your/benchmark_test.py</test_file>
         <launch_command>launch_test</launch_command>

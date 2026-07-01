@@ -75,6 +75,8 @@ See:
 - [`user_requirements_template.xml`](data/templates/user_requirements_template.xml)
 - [`fastdds_config_template.xml`](data/templates/fastdds_config_template.xml)
 
+CycloneDDS is now supported alongside FastDDS. To optimize a CycloneDDS deployment, set `<dds_implementation>cyclonedds</dds_implementation>` in your `user_requirements.xml` (the default is `fastdds`).
+
 ### Step 3: Choose a Benchmark Tool and Provide Benchmark Scripts
 
 Currently, only [`ros2_benchmark`](https://github.com/qualcomm-qrb-ros/ros2_benchmark) is supported.
@@ -82,7 +84,7 @@ Currently, only [`ros2_benchmark`](https://github.com/qualcomm-qrb-ros/ros2_benc
 ### Step 4: Run the Optimizer
 
 ```bash README.md
-uv run fastdds-optimizer run \
+uv run dds-optimizer run \
     --requirements /path/to/user_requirements.xml \
     --initial-config /path/to/initial_DDS_config.xml
 ```
@@ -92,7 +94,7 @@ uv run fastdds-optimizer run \
 > the best config will be placed in data/optimization_history
 
 ```bash README.md
-uv run fastdds-optimizer dashboard --port 5000
+uv run dds-optimizer dashboard --port 5000
 ```
 
 Open `http://localhost:5000/` in your browser:

@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 
 """
-Optimization Loop: orchestrates the full FastDDS configuration optimization workflow.
+Optimization Loop: orchestrates the full DDS configuration optimization workflow.
 
 Workflow:
     Phase 1: Parse requirements → Collect environment → Validate both
@@ -457,7 +457,7 @@ def _generate_config_with_llm(
     backend=None,
 ) -> tuple:
     """
-    Generate improved FastDDS parameter values using the LLM.
+    Generate improved DDS parameter values using the LLM.
 
     Builds a feedback prompt with the current parameter values, benchmark results,
     performance gaps, pipeline topology, and a history of past epochs (last 2 in
@@ -475,7 +475,7 @@ def _generate_config_with_llm(
 
     for attempt in range(1, MAX_LLM_PARSE_RETRIES + 1):
         try:
-            logger.info(f"Generating improved FastDDS params via LLM (attempt {attempt})...")
+            logger.info(f"Generating improved DDS params via LLM (attempt {attempt})...")
 
             # Compute performance gaps when we have actual benchmark results
             if previous_eval is not None and previous_results is not None:
