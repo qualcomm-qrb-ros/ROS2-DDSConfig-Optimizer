@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from fastdds_optimizer.requirements.parser import parse_requirements
+from dds_optimizer.requirements.parser import parse_requirements
 
 
 SAMPLE_XML = """\

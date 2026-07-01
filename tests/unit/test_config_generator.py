@@ -12,7 +12,7 @@ a file path — the pattern used in optimization_loop.py.
 import pytest
 from pathlib import Path
 
-from fastdds_optimizer.models import DDSParameterSet
+from dds_optimizer.models import DDSParameterSet
 
 # Sample FastDDS XML configs for testing
 SAMPLE_XML_PROFILES = """<?xml version="1.0" encoding="UTF-8"?>

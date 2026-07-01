@@ -12,7 +12,7 @@ license = { text = "BSD-3-Clause-Clear" }
 authors = [
     { name = "Na Song" }
 ]
-keywords = ["fastdds", "ros2", "optimization", "dds", "performance"]
+keywords = ["fastdds", "cyclonedds", "ros2", "optimization", "dds", "performance"]
 dependencies = [
     "openai>=1.0.0",
     "anthropic>=0.20.0",
@@ -25,10 +25,10 @@ dependencies = [
 ]
 
 [project.scripts]
-fastdds-optimizer = "fastdds_optimizer.main:main"
+dds-optimizer = "dds_optimizer.main:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/fastdds_optimizer"]
+packages = ["src/dds_optimizer"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

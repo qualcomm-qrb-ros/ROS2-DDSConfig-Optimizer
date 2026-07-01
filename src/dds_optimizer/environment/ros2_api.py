@@ -103,7 +103,7 @@ def collect_pipeline_topology_via_api(
         from rclpy.executors import SingleThreadedExecutor
         executor = SingleThreadedExecutor(context=context)
         node = rclpy.create_node(
-            f"_fastdds_optimizer_collector_{os.getpid()}",
+            f"_dds_optimizer_collector_{os.getpid()}",
             context=context,
             enable_rosout=False,
         )

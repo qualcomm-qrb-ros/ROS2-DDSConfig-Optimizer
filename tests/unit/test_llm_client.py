@@ -6,7 +6,7 @@
 import pytest
 from unittest.mock import MagicMock, patch
 
-from fastdds_optimizer.models import LLMConfig
+from dds_optimizer.models import LLMConfig
 
 
 def make_openai_llm_config():
@@ -72,7 +72,7 @@ def test_bug_openai_empty_choices_raises_index_error():
     CURRENT (buggy):
     An IndexError propagates: 'list index out of range'.
     """
-    from fastdds_optimizer.llm.llm_client import _call_openai
+    from dds_optimizer.llm.llm_client import _call_openai
 
     llm_config = make_openai_llm_config()
     empty_choices_response = make_mock_openai_response(choices_count=0)
@@ -96,7 +96,7 @@ def test_bug_openai_empty_choices_raises_index_error():
 
 def test_openai_normal_response_returns_content():
     """Test that a normal OpenAI response with content is returned correctly."""
-    from fastdds_optimizer.llm.llm_client import _call_openai
+    from dds_optimizer.llm.llm_client import _call_openai
 
     llm_config = make_openai_llm_config()
     normal_response = make_mock_openai_response(content="Generated config JSON")

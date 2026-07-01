@@ -251,7 +251,7 @@ def collect_environment(
         EnvironmentInfo with all collected system information.
 
     Example:
-        >>> from fastdds_optimizer.models import PerformanceRequirements, CpuUsageRequirement
+        >>> from dds_optimizer.models import PerformanceRequirements, CpuUsageRequirement
         >>> reqs = PerformanceRequirements(cpu_usage=CpuUsageRequirement(max_percent=50))
         >>> env = collect_environment(reqs)
         >>> print(env.os_version)

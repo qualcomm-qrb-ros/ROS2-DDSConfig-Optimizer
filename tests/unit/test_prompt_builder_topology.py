@@ -7,8 +7,8 @@ import json
 
 import pytest
 
-from fastdds_optimizer.llm.prompt_builder import _format_pipeline_topology_section
-from fastdds_optimizer.models import PipelineTopology, TopicConnection
+from dds_optimizer.llm.prompt_builder import _format_pipeline_topology_section
+from dds_optimizer.models import PipelineTopology, TopicConnection
 
 
 def _make_topic(

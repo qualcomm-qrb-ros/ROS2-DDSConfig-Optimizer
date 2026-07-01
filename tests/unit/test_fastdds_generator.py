@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from fastdds_optimizer.config.generator import generate_fastdds_config
-from fastdds_optimizer.models import DDSParameterSet
+from dds_optimizer.config.generator import generate_fastdds_config
+from dds_optimizer.models import DDSParameterSet
 
 
 def _generate(params: dict, tmp_path: Path) -> ET.Element:

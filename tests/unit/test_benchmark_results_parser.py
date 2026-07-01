@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from fastdds_optimizer.benchmark.results_parser import parse_benchmark_results
+from dds_optimizer.benchmark.results_parser import parse_benchmark_results
 
 
 SAMPLE_RESULT = {

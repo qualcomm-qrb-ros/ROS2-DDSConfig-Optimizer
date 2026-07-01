@@ -8,13 +8,13 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from fastdds_optimizer.environment.ros2_api import (
+from dds_optimizer.environment.ros2_api import (
     _collect_process_groups,
     _collect_topic_connections,
     _is_infrastructure_node,
     _make_full_name,
 )
-from fastdds_optimizer.models import TopicConnection
+from dds_optimizer.models import TopicConnection
 
 
 # ---------------------------------------------------------------------------
@@ -179,7 +179,7 @@ class TestCollectProcessGroups:
         """A node with all three container services should be identified."""
         node, executor = self._make_container_node("/publisher_container")
         with patch(
-            "fastdds_optimizer.environment.ros2_api._query_container_nodes",
+            "dds_optimizer.environment.ros2_api._query_container_nodes",
             return_value=["/publisher"],
         ):
             result = _collect_process_groups(
@@ -190,7 +190,7 @@ class TestCollectProcessGroups:
     def test_query_returning_none_skipped(self):
         node, executor = self._make_container_node("/pub_container")
         with patch(
-            "fastdds_optimizer.environment.ros2_api._query_container_nodes",
+            "dds_optimizer.environment.ros2_api._query_container_nodes",
             return_value=None,
         ):
             result = _collect_process_groups(node, executor, ["/pub_container"])
@@ -210,16 +210,16 @@ class TestCollectorFallback:
 
     def test_fallback_to_cli_on_api_failure(self):
         """When rclpy API raises, CLI fallback is used and no NameError propagates."""
-        from fastdds_optimizer.environment import collector
+        from dds_optimizer.environment import collector
 
         empty_topology = collector.PipelineTopology(nodes=[], topics=[])
 
         # Patch at the source module since collector uses a lazy import
         with patch(
-            "fastdds_optimizer.environment.ros2_api.collect_pipeline_topology_via_api",
+            "dds_optimizer.environment.ros2_api.collect_pipeline_topology_via_api",
             side_effect=RuntimeError("rclpy not available"),
         ), patch(
-            "fastdds_optimizer.environment.collector._collect_pipeline_topology_via_cli",
+            "dds_optimizer.environment.collector._collect_pipeline_topology_via_cli",
             return_value=empty_topology,
         ) as mock_cli:
             result = collector.collect_pipeline_topology()
@@ -229,18 +229,18 @@ class TestCollectorFallback:
 
     def test_logger_defined_in_collector(self):
         """Ensure collector module has a logger so the except block never raises NameError."""
-        from fastdds_optimizer.environment import collector
+        from dds_optimizer.environment import collector
         assert hasattr(collector, "logger"), "collector.logger must be defined at module level"
 
     def test_api_exception_does_not_propagate(self):
         """Any exception from the rclpy API path must be caught, not re-raised."""
-        from fastdds_optimizer.environment import collector
+        from dds_optimizer.environment import collector
 
         with patch(
-            "fastdds_optimizer.environment.ros2_api.collect_pipeline_topology_via_api",
+            "dds_optimizer.environment.ros2_api.collect_pipeline_topology_via_api",
             side_effect=Exception("unexpected error from rclpy"),
         ), patch(
-            "fastdds_optimizer.environment.collector._collect_pipeline_topology_via_cli",
+            "dds_optimizer.environment.collector._collect_pipeline_topology_via_cli",
             return_value=collector.PipelineTopology(),
         ):
             # Must not raise

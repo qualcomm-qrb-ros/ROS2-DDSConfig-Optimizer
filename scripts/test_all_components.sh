@@ -21,7 +21,7 @@ echo ""
 # Check Python environment
 echo "[1/6] Checking Python environment..."
 uv run python --version
-uv run python -c "import fastdds_optimizer; print('  Package import: OK')"
+uv run python -c "import dds_optimizer; print('  Package import: OK')"
 echo ""
 
 # Run unit tests
@@ -36,7 +36,7 @@ echo ""
 # Test requirements parser
 echo "[3/6] Testing requirements parser..."
 uv run python -c "
-from fastdds_optimizer.requirements.parser import parse_requirements
+from dds_optimizer.requirements.parser import parse_requirements
 import tempfile, os
 
 xml = '''<?xml version=\"1.0\" encoding=\"UTF-8\"?>
@@ -68,9 +68,9 @@ echo "[4/6] Testing config generator..."
 uv run python -c "
 import tempfile
 from pathlib import Path
-from fastdds_optimizer.config.generator import generate_fastdds_config
-from fastdds_optimizer.config.validator import validate_config
-from fastdds_optimizer.models import DDSParameterSet
+from dds_optimizer.config.generator import generate_fastdds_config
+from dds_optimizer.config.validator import validate_config
+from dds_optimizer.models import DDSParameterSet
 
 params = DDSParameterSet(
     parameters={
@@ -97,7 +97,7 @@ echo "[5/6] Testing benchmark results parser..."
 uv run python -c "
 import json, tempfile
 from pathlib import Path
-from fastdds_optimizer.benchmark.results_parser import parse_benchmark_results
+from dds_optimizer.benchmark.results_parser import parse_benchmark_results
 
 result = {
     'BasicPerformanceMetrics.MEAN_LATENCY': 9.85,
@@ -125,7 +125,7 @@ echo ""
 # Test LLM response parser
 echo "[6/6] Testing LLM response parser..."
 uv run python -c "
-from fastdds_optimizer.llm.response_parser import parse_llm_response
+from dds_optimizer.llm.response_parser import parse_llm_response
 
 response = '''
 \`\`\`json

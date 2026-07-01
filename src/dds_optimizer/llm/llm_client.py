@@ -54,7 +54,7 @@ def call_llm(prompt: str, llm_config: LLMConfig) -> str:
         RuntimeError: If all retry attempts fail.
 
     Example:
-        >>> from fastdds_optimizer.models import LLMConfig
+        >>> from dds_optimizer.models import LLMConfig
         >>> config = LLMConfig(provider="openai", model="gpt-4", api_key_env="OPENAI_API_KEY")
         >>> response = call_llm("Generate a FastDDS config...", config)
         >>> print(response[:100])

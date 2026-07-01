@@ -25,7 +25,7 @@ _configured = False
 
 def _configure_logging() -> None:
     """
-    Configure the root logger for the fastdds_optimizer package.
+    Configure the root logger for the dds_optimizer package.
 
     Sets up a console handler with a consistent format. Called once on first use.
     """
@@ -34,7 +34,7 @@ def _configure_logging() -> None:
         return
 
     # Get the package root logger
-    root_logger = logging.getLogger("fastdds_optimizer")
+    root_logger = logging.getLogger("dds_optimizer")
     root_logger.setLevel(_LOG_LEVEL)
 
     # Avoid adding duplicate handlers if already configured
@@ -76,7 +76,7 @@ def get_logger(name: str) -> logging.Logger:
     package logging is configured before returning the logger.
 
     Args:
-        name: Module name, typically __name__ (e.g., 'fastdds_optimizer.llm.client').
+        name: Module name, typically __name__ (e.g., 'dds_optimizer.llm.client').
 
     Returns:
         Configured Logger instance.
@@ -93,7 +93,7 @@ def get_logger(name: str) -> logging.Logger:
 
 def set_log_level(level: str) -> None:
     """
-    Dynamically change the log level for all fastdds_optimizer loggers.
+    Dynamically change the log level for all dds_optimizer loggers.
 
     Args:
         level: Log level string ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL').
@@ -106,7 +106,7 @@ def set_log_level(level: str) -> None:
     if numeric_level is None:
         raise ValueError(f"Invalid log level: '{level}'")
 
-    root_logger = logging.getLogger("fastdds_optimizer")
+    root_logger = logging.getLogger("dds_optimizer")
     root_logger.setLevel(numeric_level)
     for handler in root_logger.handlers:
         handler.setLevel(numeric_level)

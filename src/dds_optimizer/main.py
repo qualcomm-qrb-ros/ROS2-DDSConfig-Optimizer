@@ -5,8 +5,8 @@
 Main CLI entry point for the ROS2 DDSConfig Optimizer.
 
 Usage:
-    fastdds-optimizer run --requirements user_requirements.xml
-    fastdds-optimizer dashboard [--port 5000]
+    dds-optimizer run --requirements user_requirements.xml
+    dds-optimizer dashboard [--port 5000]
 
 The CLI is built using Python's argparse module for simplicity and zero
 additional dependencies beyond what's already in pyproject.toml.
@@ -115,19 +115,19 @@ def cmd_dashboard(args: argparse.Namespace) -> int:
 def create_parser() -> argparse.ArgumentParser:
     """Create the CLI argument parser."""
     parser = argparse.ArgumentParser(
-        prog="fastdds-optimizer",
+        prog="dds-optimizer",
         description="AI-driven FastDDS configuration optimizer for ROS2",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
   # Run optimization with requirements file
-  fastdds-optimizer run --requirements user_requirements.xml
+  dds-optimizer run --requirements user_requirements.xml
 
   # Run with verbose logging
-  fastdds-optimizer run --requirements user_requirements.xml --verbose
+  dds-optimizer run --requirements user_requirements.xml --verbose
 
   # Start the web dashboard
-  fastdds-optimizer dashboard --port 5000
+  dds-optimizer dashboard --port 5000
         """,
     )
 
@@ -189,9 +189,9 @@ Examples:
 
 def main() -> None:
     """
-    Main entry point for the fastdds-optimizer CLI.
+    Main entry point for the dds-optimizer CLI.
 
-    This function is called when the user runs 'fastdds-optimizer' from the
+    This function is called when the user runs 'dds-optimizer' from the
     command line (as configured in pyproject.toml [project.scripts]).
     """
     parser = create_parser()

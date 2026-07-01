@@ -5,7 +5,7 @@
 
 import pytest
 
-from fastdds_optimizer.llm.response_parser import (
+from dds_optimizer.llm.response_parser import (
     _extract_json_from_response,
     _extract_reasoning,
     _normalize_params,
