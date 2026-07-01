@@ -111,44 +111,37 @@ def get_current_config() -> Optional[str]:
     return os.environ.get(FASTDDS_PROFILES_ENV_VAR)
 
 
-def get_export_command(config_path: Path) -> str:
+def get_export_command(
+    config_path: Path, env_var: str = FASTDDS_PROFILES_ENV_VAR
+) -> str:
     """
     Generate a shell export command for manual use.
 
-    This is useful for displaying to the user so they can manually apply
-    the optimized configuration in their own shell sessions.
-
     Args:
-        config_path: Path to the FastDDS XML configuration file.
+        config_path: Path to the DDS XML configuration file.
+        env_var: Name of the env var to export (defaults to the FastDDS profiles
+                 var; pass "CYCLONEDDS_URI" for CycloneDDS).
 
     Returns:
         Shell export command string.
-
-    Example:
-        >>> cmd = get_export_command(Path("/data/configs/optimized.xml"))
-        >>> print(cmd)
-        export FASTRTPS_DEFAULT_PROFILES_FILE=/data/configs/optimized.xml
     """
-    return f"export {FASTDDS_PROFILES_ENV_VAR}={config_path.resolve()}"
+    return f"export {env_var}={config_path.resolve()}"
 
 
-def build_env_for_subprocess(config_path: Path) -> dict:
+def build_env_for_subprocess(
+    config_path: Path, env_var: str = FASTDDS_PROFILES_ENV_VAR
+) -> dict:
     """
-    Build an environment dictionary for subprocess calls with the config set.
-
-    This is used by the benchmark launcher to pass the config path to the
-    benchmark subprocess without modifying the current process environment.
+    Build an environment dictionary for subprocess calls with the config var set.
 
     Args:
-        config_path: Path to the FastDDS XML configuration file.
+        config_path: Path to the DDS XML configuration file.
+        env_var: Name of the env var the DDS impl reads (defaults to the FastDDS
+                 profiles var; pass "CYCLONEDDS_URI" for CycloneDDS).
 
     Returns:
-        Dictionary of environment variables with FASTRTPS_DEFAULT_PROFILES_FILE set.
-
-    Example:
-        >>> env = build_env_for_subprocess(Path("/tmp/config.xml"))
-        >>> subprocess.run(["launch_test", "benchmark.py"], env=env)
+        Dictionary of environment variables with <env_var> set to the config path.
     """
     env = os.environ.copy()
-    env[FASTDDS_PROFILES_ENV_VAR] = str(config_path.resolve())
+    env[env_var] = str(config_path.resolve())
     return env
