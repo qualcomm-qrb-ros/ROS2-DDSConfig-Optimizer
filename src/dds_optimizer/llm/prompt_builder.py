@@ -23,6 +23,7 @@ import json
 from pathlib import Path
 from typing import Dict, List, Optional
 
+from ..backends.base import DDSBackend
 from ..models import (
     BenchmarkResults,
     EnvironmentInfo,
@@ -32,25 +33,24 @@ from ..models import (
     RequirementsConfig,
 )
 
-# Path to the performance-critical parameters knowledge base
-_KNOWLEDGE_BASE_PATH = (
+# Fallback KB path when no backend is supplied (backward compatibility).
+_DEFAULT_KB_PATH = (
     Path(__file__).parent.parent.parent.parent
-    / "data"
-    / "knowledge_base"
-    / "performance_critical_params.json"
+    / "data" / "knowledge_base" / "fastdds" / "performance_critical_params.json"
 )
 
 
-def _load_performance_critical_params() -> Dict:
+def _load_performance_critical_params(kb_path: Optional[Path] = None) -> Dict:
     """Load the performance-critical parameters knowledge base."""
+    path = kb_path or _DEFAULT_KB_PATH
     try:
-        with open(_KNOWLEDGE_BASE_PATH) as f:
+        with open(path) as f:
             return json.load(f)
     except Exception:
         return {}
 
 
-def _format_params_reference(params_data: Dict) -> str:
+def _format_params_reference(params_data: Dict, backend_name: str = "FastDDS") -> str:
     """
     Format the performance-critical parameters as a reference table + full descriptions.
 
@@ -62,7 +62,7 @@ def _format_params_reference(params_data: Dict) -> str:
         return "## Available Parameters\n(knowledge base not available)"
 
     lines = [
-        "## Available FastDDS Parameters",
+        f"## Available {backend_name} Parameters",
         "Use ONLY these parameter names in the `\"set\"` object of your JSON response.",
         "Parameters in `\"delete\"` must also be from this list.",
         "",
@@ -392,6 +392,7 @@ def build_feedback_prompt(
     past_iterations: Optional[List[OptimizationIteration]] = None,
     benchmark_error: Optional[str] = None,
     pipeline_topology: Optional[PipelineTopology] = None,
+    backend: Optional[DDSBackend] = None,
 ) -> str:
     """
     Build a feedback prompt for iterative optimization.
@@ -429,11 +430,24 @@ def build_feedback_prompt(
             "Your task is to generate improved FastDDS parameter values to close the performance gaps."
         )
 
-    # Load performance-critical parameters reference
-    params_data = _load_performance_critical_params()
-    params_reference = _format_params_reference(params_data)
+    # Backend-specific KB path, table title, and system-prompt opening line.
+    if backend is not None:
+        kb_path = backend.knowledge_base_path()
+        backend_label = backend.name
+        expertise_line = backend.prompt_expertise()
+    else:
+        kb_path = None
+        backend_label = "FastDDS"
+        expertise_line = (
+            "You are an expert in FastDDS (eProsima Fast DDS) configuration "
+            "optimization for ROS2."
+        )
 
-    system_context = f"""You are an expert in FastDDS (eProsima Fast DDS) configuration optimization for ROS2.
+    # Load performance-critical parameters reference
+    params_data = _load_performance_critical_params(kb_path)
+    params_reference = _format_params_reference(params_data, backend_label)
+
+    system_context = f"""{expertise_line}
 
 ## ROS2 and DDS Background
 
