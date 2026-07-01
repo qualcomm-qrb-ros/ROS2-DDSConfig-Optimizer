@@ -238,3 +238,60 @@ def test_parse_openrouter_no_base_url(tmp_path):
     assert llm.model == "openrouter/free"
     assert llm.base_url is None   # auto-resolved to https://openrouter.ai/api/v1 at call time
     assert llm.api_key_env == "LLM_API_KEY"
+
+
+def test_dds_implementation_defaults_to_fastdds(tmp_path):
+    xml = tmp_path / "req.xml"
+    xml.write_text(
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<optimization_requirements>'
+        '<benchmark><test_file>/tmp/b.py</test_file></benchmark>'
+        '<performance_requirements>'
+        '<latency optional="false"><target_mean_ms>10</target_mean_ms></latency>'
+        '</performance_requirements>'
+        '<llm_config><provider>openrouter</provider><model>m</model>'
+        '<api_key_env>LLM_API_KEY</api_key_env></llm_config>'
+        '</optimization_requirements>'
+    )
+    from dds_optimizer.requirements.parser import parse_requirements
+    cfg = parse_requirements(str(xml))
+    assert cfg.dds_implementation == "fastdds"
+
+
+def test_dds_implementation_parsed_cyclonedds(tmp_path):
+    xml = tmp_path / "req.xml"
+    xml.write_text(
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<optimization_requirements>'
+        '<dds_implementation>cyclonedds</dds_implementation>'
+        '<benchmark><test_file>/tmp/b.py</test_file></benchmark>'
+        '<performance_requirements>'
+        '<latency optional="false"><target_mean_ms>10</target_mean_ms></latency>'
+        '</performance_requirements>'
+        '<llm_config><provider>openrouter</provider><model>m</model>'
+        '<api_key_env>LLM_API_KEY</api_key_env></llm_config>'
+        '</optimization_requirements>'
+    )
+    from dds_optimizer.requirements.parser import parse_requirements
+    cfg = parse_requirements(str(xml))
+    assert cfg.dds_implementation == "cyclonedds"
+
+
+def test_invalid_dds_implementation_raises(tmp_path):
+    xml = tmp_path / "req.xml"
+    xml.write_text(
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<optimization_requirements>'
+        '<dds_implementation>nosuchdds</dds_implementation>'
+        '<benchmark><test_file>/tmp/b.py</test_file></benchmark>'
+        '<performance_requirements>'
+        '<latency optional="false"><target_mean_ms>10</target_mean_ms></latency>'
+        '</performance_requirements>'
+        '<llm_config><provider>openrouter</provider><model>m</model>'
+        '<api_key_env>LLM_API_KEY</api_key_env></llm_config>'
+        '</optimization_requirements>'
+    )
+    from dds_optimizer.requirements.parser import parse_requirements
+    import pytest
+    with pytest.raises(ValueError):
+        parse_requirements(str(xml))

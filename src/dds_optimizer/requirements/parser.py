@@ -360,6 +360,8 @@ def parse_requirements(xml_path: str) -> RequirementsConfig:
     # Directory containing the XML file — used to resolve relative test_file paths
     xml_dir = path.resolve().parent
 
+    dds_implementation = _get_text(root, "dds_implementation", default="fastdds")
+
     # Parse each section
     benchmark = _parse_benchmark(root, xml_dir)
     performance_requirements = _parse_performance_requirements(root)
@@ -371,4 +373,5 @@ def parse_requirements(xml_path: str) -> RequirementsConfig:
         performance_requirements=performance_requirements,
         optimization_settings=optimization_settings,
         llm_config=llm_config,
+        dds_implementation=dds_implementation,
     )

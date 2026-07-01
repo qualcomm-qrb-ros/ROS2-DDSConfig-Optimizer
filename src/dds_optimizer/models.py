@@ -197,6 +197,19 @@ class RequirementsConfig(BaseModel):
     performance_requirements: PerformanceRequirements
     optimization_settings: OptimizationSettings = Field(default_factory=OptimizationSettings)
     llm_config: LLMConfig = Field(default_factory=LLMConfig)
+    dds_implementation: str = "fastdds"
+
+    @field_validator("dds_implementation")
+    @classmethod
+    def validate_dds_implementation(cls, v: str) -> str:
+        """Ensure the DDS implementation is supported."""
+        supported = {"fastdds", "cyclonedds"}
+        key = v.strip().lower()
+        if key not in supported:
+            raise ValueError(
+                f"Unsupported dds_implementation '{v}'. Must be one of: {supported}"
+            )
+        return key
 
 
 # ---------------------------------------------------------------------------
