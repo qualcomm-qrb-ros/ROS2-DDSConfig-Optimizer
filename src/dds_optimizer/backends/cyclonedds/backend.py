@@ -35,6 +35,7 @@ class CycloneDDSBackend(DDSBackend):
         if not self._kb_cache:
             with open(self.knowledge_base_path()) as f:
                 self._kb_cache = json.load(f)
+            logger.debug(f"Loaded CycloneDDS knowledge base: {self.knowledge_base_path()}")
         return self._kb_cache
 
     def prompt_expertise(self) -> str:
