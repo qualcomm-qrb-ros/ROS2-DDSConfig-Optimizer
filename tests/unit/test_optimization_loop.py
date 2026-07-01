@@ -269,12 +269,17 @@ def test_bug_convergence_check_unreachable(tmp_path):
     dummy_config_path = tmp_path / "epoch_1" / "fastdds_config.xml"
     dummy_config_path.parent.mkdir(parents=True)
 
+    mock_backend = MagicMock()
+    mock_backend.generate_config.return_value = dummy_config_path
+    mock_backend.profiles_env_var = "FASTRTPS_DEFAULT_PROFILES_FILE"
+    mock_backend.rmw_implementation = "rmw_fastrtps_cpp"
+    mock_backend.name = "fastdds"
     module = "dds_optimizer.optimizer.optimization_loop"
     with (
         patch(f"{module}.run_benchmark", return_value=(tmp_path / "result.json", None)),
         patch(f"{module}.parse_benchmark_results", return_value=dummy_results),
         patch(f"{module}.evaluate_results", side_effect=[eval_iter1, eval_iter2]),
-        patch(f"{module}.generate_fastdds_config"),
+        patch(f"{module}.get_backend", return_value=mock_backend),
         patch(
             f"{module}._generate_config_with_llm",
             return_value=(dummy_param_set, "prompt", "response"),

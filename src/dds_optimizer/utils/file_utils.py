@@ -8,10 +8,10 @@ Optimization history is stored under:
     data/optimization_history/
     └── YYYYMMDD_HHMMSS/          ← one folder per run
         ├── epoch_1/
-        │   ├── fastdds_config.xml
+        │   ├── dds_config.xml
         │   └── benchmark_result.json
         ├── epoch_2/
-        │   ├── fastdds_config.xml
+        │   ├── dds_config.xml
         │   └── benchmark_result.json
         ├── best_config.xml
         └── session_summary.json
@@ -90,16 +90,16 @@ def get_epoch_dir(session_dir: Path, iteration: int) -> Path:
 
 def get_config_path(session_dir: Path, iteration: int) -> Path:
     """
-    Get the path for the FastDDS XML config file for a specific epoch.
+    Get the path for the DDS XML config file for a specific epoch.
 
     Args:
         session_dir: Session directory path.
         iteration: Iteration number (1-based).
 
     Returns:
-        Path for the config file (e.g., session_dir/epoch_1/fastdds_config.xml).
+        Path for the config file (e.g., session_dir/epoch_1/dds_config.xml).
     """
-    return get_epoch_dir(session_dir, iteration) / "fastdds_config.xml"
+    return get_epoch_dir(session_dir, iteration) / "dds_config.xml"
 
 
 def get_benchmark_result_path(session_dir: Path, iteration: int) -> Path:

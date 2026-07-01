@@ -15,17 +15,17 @@ Workflow:
 The LLM outputs a structured JSON object:
     {"set": {"param": value, ...}, "delete": ["param", ...]}
 
-The system generates the complete FastDDS XML config from the accumulated params
-using config/generator.py. "delete" params are removed from the accumulated dict,
-reverting them to template defaults.
+The system generates the complete DDS XML config from the accumulated params
+using the selected DDS backend. "delete" params are removed from the accumulated
+dict, reverting them to template defaults.
 
 Output structure:
     data/optimization_history/YYYYMMDD_HHMMSS/
     ├── epoch_1/
-    │   ├── fastdds_config.xml
+    │   ├── dds_config.xml
     │   └── benchmark_result.json
     ├── epoch_2/
-    │   ├── fastdds_config.xml
+    │   ├── dds_config.xml
     │   ├── benchmark_result.json
     │   └── llm_conversation.md    ← full prompt + response (human-readable)
     ├── best_config.xml
@@ -38,16 +38,15 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+from ..backends.registry import get_backend
 from ..benchmark.launcher import run_benchmark
 from ..benchmark.results_parser import parse_benchmark_results
-from ..config.generator import generate_fastdds_config
 from ..environment.collector import collect_environment
 from ..environment.validator import validate_environment
 from ..llm.llm_client import call_llm
 from ..llm.prompt_builder import build_feedback_prompt
 from ..llm.response_parser import parse_llm_response
 from ..models import (
-    DDSParameterSet,
     EnvironmentInfo,
     OptimizationIteration,
     OptimizationSession,
@@ -227,7 +226,7 @@ def _run_optimization_loop(
     """
     Run the main optimization loop.
 
-    Epoch 1: copy initial_config_path → epoch_1/fastdds_config.xml, run benchmark.
+    Epoch 1: copy initial_config_path → epoch_1/dds_config.xml, run benchmark.
     Epoch 2+: LLM generates improved params → apply set/delete → generate XML → run benchmark.
 
     The pipeline topology is collected in a background thread during each benchmark run.
@@ -239,6 +238,9 @@ def _run_optimization_loop(
     """
     max_iterations = requirements.optimization_settings.max_iterations
     convergence_threshold = requirements.optimization_settings.convergence_threshold
+
+    backend = get_backend(requirements.dds_implementation)
+    logger.info(f"DDS backend: {backend.name} (RMW: {backend.rmw_implementation})")
 
     # current_config_params accumulates all LLM-set parameters across epochs.
     # "delete" operations remove entries from this dict (revert to template defaults).
@@ -278,6 +280,7 @@ def _run_optimization_loop(
                 past_iterations=list(session.iterations),
                 last_benchmark_error=last_benchmark_error,
                 pipeline_topology=last_pipeline_topology,
+                backend=backend,
             )
             # Save the LLM conversation (prompt + response) to a human-readable file
             _save_llm_conversation(
@@ -299,11 +302,8 @@ def _run_optimization_loop(
             current_config_params.update(param_set.parameters)
             params_set_this_epoch = dict(param_set.parameters)
 
-            # Generate the FastDDS XML config from the accumulated parameters
-            generate_fastdds_config(
-                DDSParameterSet(parameters=current_config_params),
-                config_path,
-            )
+            # Generate the DDS XML config from the accumulated parameters
+            backend.generate_config(dict(current_config_params), config_path)
             llm_reasoning = param_set.reasoning
 
         # -------------------------------------------------------------------
@@ -314,9 +314,11 @@ def _run_optimization_loop(
         try:
             result_json_path, pipeline_topology = run_benchmark(
                 benchmark_config=requirements.benchmark,
-                fastdds_config_path=config_path,
+                config_path=config_path,
                 epoch_dir=epoch_dir,
                 iteration=iteration,
+                profiles_env_var=backend.profiles_env_var,
+                rmw_implementation=backend.rmw_implementation,
             )
             last_pipeline_topology = pipeline_topology
         except Exception as e:
@@ -452,6 +454,7 @@ def _generate_config_with_llm(
     past_iterations: list,
     last_benchmark_error: Optional[str] = None,
     pipeline_topology: Optional[PipelineTopology] = None,
+    backend=None,
 ) -> tuple:
     """
     Generate improved FastDDS parameter values using the LLM.
@@ -494,6 +497,7 @@ def _generate_config_with_llm(
                 past_iterations=past_iterations,
                 benchmark_error=last_benchmark_error,
                 pipeline_topology=pipeline_topology,
+                backend=backend,
             )
             last_prompt = prompt
 
@@ -720,9 +724,10 @@ def _print_optimization_summary(
     # -----------------------------------------------------------------------
     if session.final_config_path:
         lines.append(f"\n  Best config: {session.final_config_path}")
+        backend = get_backend(requirements.dds_implementation)
         lines.append(
             f"\n  To use:\n"
-            f"    export FASTRTPS_DEFAULT_PROFILES_FILE={session.final_config_path}"
+            f"    export {backend.profiles_env_var}={session.final_config_path}"
         )
 
     lines.append("\n" + "=" * (W + 2))
