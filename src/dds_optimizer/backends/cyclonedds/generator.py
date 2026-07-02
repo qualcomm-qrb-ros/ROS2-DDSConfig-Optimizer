@@ -21,6 +21,16 @@ Mechanism:
      reference cyclonedds_config.xml).
   5. Values pass through verbatim — CycloneDDS accepts unit-suffixed strings
      ("64 KiB", "100 ms"); no conversion.
+  6. Value validation — the LLM occasionally emits a semantically-invalid value
+     (e.g. "A" for a boolean field). CycloneDDS rejects the whole config if any
+     value is invalid, which would fail the entire benchmark epoch. To stay
+     robust we validate the value against the KB `type` and skip (with a
+     warning) any parameter whose value is clearly invalid, so the remaining
+     valid parameters still produce a usable config. Only reliable checks are
+     applied: `int` (parseable + within min/max) and `bool` (true/false). String,
+     enum, and list types are passed through unchecked because their KB
+     `possible_values` are unreliable and legal values include unit-suffixed
+     strings like "8 MiB" and "default".
 """
 
 import xml.etree.ElementTree as ET
@@ -33,12 +43,72 @@ logger = get_logger(__name__)
 
 CYCLONEDDS_NAMESPACE = "https://cdds.io/config"
 
+# Accepted boolean spellings for bool-typed parameters (case-insensitive).
+_BOOL_TOKENS = {"true", "false"}
+
 
 def _str(value) -> str:
     """XML string form; bools lowercased to match CycloneDDS conventions."""
     if isinstance(value, bool):
         return "true" if value else "false"
     return str(value)
+
+
+def _is_valid_value(name: str, value, info: Dict) -> bool:
+    """
+    Check an LLM-supplied value against the KB type before writing it.
+
+    Only reliable checks are enforced (see the module docstring):
+    - int:  must parse as an integer and lie within [min, max] when given.
+    - bool: must be a real bool or the string 'true'/'false' (case-insensitive).
+    Other types (string/enum/list) are always accepted here — their legal values
+    are not reliably enumerable in the KB.
+
+    Returns True if the value is acceptable, False if it should be skipped.
+    """
+    param_type = info.get("type")
+
+    if param_type == "bool":
+        if isinstance(value, bool):
+            return True
+        if isinstance(value, str) and value.strip().lower() in _BOOL_TOKENS:
+            return True
+        logger.warning(
+            f"CycloneDDS param '{name}': invalid bool value {value!r} "
+            "(expected true/false); skipping."
+        )
+        return False
+
+    if param_type == "int":
+        # bool is a subclass of int but is not a valid integer value here.
+        if isinstance(value, bool):
+            logger.warning(
+                f"CycloneDDS param '{name}': expected int, got bool {value!r}; skipping."
+            )
+            return False
+        try:
+            ivalue = int(str(value).strip())
+        except (TypeError, ValueError):
+            logger.warning(
+                f"CycloneDDS param '{name}': invalid int value {value!r}; skipping."
+            )
+            return False
+        lo = info.get("min")
+        hi = info.get("max")
+        if isinstance(lo, (int, float)) and ivalue < lo:
+            logger.warning(
+                f"CycloneDDS param '{name}': int {ivalue} below min {lo}; skipping."
+            )
+            return False
+        if isinstance(hi, (int, float)) and ivalue > hi:
+            logger.warning(
+                f"CycloneDDS param '{name}': int {ivalue} above max {hi}; skipping."
+            )
+            return False
+        return True
+
+    # string / enum / list and any unknown type: pass through unchecked.
+    return True
 
 
 def _apply_path(root: ET.Element, cache: Dict[str, ET.Element], segments, value) -> None:
@@ -92,6 +162,8 @@ def generate_cyclonedds_config(params: Dict, kb: Dict, out_path: Path) -> Path:
         info = kb_params.get(name)
         if not info or "xml_path" not in info:
             logger.warning(f"CycloneDDS param '{name}' not in knowledge base; skipping.")
+            continue
+        if not _is_valid_value(name, value, info):
             continue
         segments = info["xml_path"].split("/")
         _apply_path(root, cache, segments, value)

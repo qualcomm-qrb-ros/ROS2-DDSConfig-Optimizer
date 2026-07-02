@@ -22,12 +22,38 @@ KB = {
     }
 }
 
+# KB stub with type/min/max metadata for value-validation tests.
+KB_TYPED = {
+    "parameters": {
+        "multiple_receive_threads": {
+            "xml_path": "CycloneDDS/Domain/Internal/MultipleReceiveThreads",
+            "type": "bool",
+        },
+        "delivery_queue_max_samples": {
+            "xml_path": "CycloneDDS/Domain/Internal/DeliveryQueueMaxSamples",
+            "type": "int",
+            "min": 1,
+            "max": 1000,
+        },
+        "ack_delay": {
+            "xml_path": "CycloneDDS/Domain/Internal/AckDelay",
+            "type": "string",
+        },
+    }
+}
+
 NS = "{https://cdds.io/config}"
 
 
 def _generate(params: dict, tmp_path: Path) -> ET.Element:
     out = tmp_path / "cyclonedds.xml"
     generate_cyclonedds_config(params, KB, out)
+    return ET.parse(out).getroot()
+
+
+def _generate_kb(params: dict, kb: dict, tmp_path: Path) -> ET.Element:
+    out = tmp_path / "cyclonedds.xml"
+    generate_cyclonedds_config(params, kb, out)
     return ET.parse(out).getroot()
 
 
@@ -80,3 +106,59 @@ def test_output_is_wellformed_xml_with_declaration(tmp_path):
     generate_cyclonedds_config({"ack_delay": "10 ms"}, KB, out)
     content = out.read_text()
     assert content.startswith("<?xml")
+
+
+# ---------------------------------------------------------------------------
+# Value validation (skip semantically-invalid LLM values instead of writing
+# them and having CycloneDDS reject the whole config).
+# ---------------------------------------------------------------------------
+
+def test_invalid_bool_value_is_skipped(tmp_path):
+    # "A" is not a valid bool → the param is skipped, not written.
+    root = _generate_kb({"multiple_receive_threads": "A"}, KB_TYPED, tmp_path)
+    assert root.find(f"{NS}Domain/{NS}Internal/{NS}MultipleReceiveThreads") is None
+
+
+def test_valid_bool_value_is_written(tmp_path):
+    root = _generate_kb({"multiple_receive_threads": "true"}, KB_TYPED, tmp_path)
+    el = root.find(f"{NS}Domain/{NS}Internal/{NS}MultipleReceiveThreads")
+    assert el is not None and el.text == "true"
+
+
+def test_python_bool_value_is_written_lowercased(tmp_path):
+    root = _generate_kb({"multiple_receive_threads": False}, KB_TYPED, tmp_path)
+    el = root.find(f"{NS}Domain/{NS}Internal/{NS}MultipleReceiveThreads")
+    assert el is not None and el.text == "false"
+
+
+def test_int_out_of_range_is_skipped(tmp_path):
+    # max is 1000 → 99999 is out of range and skipped.
+    root = _generate_kb({"delivery_queue_max_samples": 99999}, KB_TYPED, tmp_path)
+    assert root.find(f"{NS}Domain/{NS}Internal/{NS}DeliveryQueueMaxSamples") is None
+
+
+def test_non_numeric_int_is_skipped(tmp_path):
+    root = _generate_kb({"delivery_queue_max_samples": "not_a_number"}, KB_TYPED, tmp_path)
+    assert root.find(f"{NS}Domain/{NS}Internal/{NS}DeliveryQueueMaxSamples") is None
+
+
+def test_valid_int_in_range_is_written(tmp_path):
+    root = _generate_kb({"delivery_queue_max_samples": 256}, KB_TYPED, tmp_path)
+    el = root.find(f"{NS}Domain/{NS}Internal/{NS}DeliveryQueueMaxSamples")
+    assert el is not None and el.text == "256"
+
+
+def test_string_type_passes_through_unchecked(tmp_path):
+    # string params accept unit-suffixed values verbatim (no validation).
+    root = _generate_kb({"ack_delay": "12 ms"}, KB_TYPED, tmp_path)
+    el = root.find(f"{NS}Domain/{NS}Internal/{NS}AckDelay")
+    assert el is not None and el.text == "12 ms"
+
+
+def test_invalid_value_does_not_block_other_params(tmp_path):
+    # One invalid value is skipped; the other valid param is still written.
+    root = _generate_kb(
+        {"multiple_receive_threads": "A", "ack_delay": "3 ms"}, KB_TYPED, tmp_path
+    )
+    assert root.find(f"{NS}Domain/{NS}Internal/{NS}MultipleReceiveThreads") is None
+    assert root.find(f"{NS}Domain/{NS}Internal/{NS}AckDelay").text == "3 ms"
