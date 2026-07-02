@@ -11,10 +11,5 @@ xsi:schemaLocation="https://cdds.io/config https://raw.githubusercontent.com/ecl
       <AllowMulticast>default</AllowMulticast>
       <MaxMessageSize>65500B</MaxMessageSize>
     </General>
-    <Tracing>
-      <Verbosity>config</Verbosity>
-      <OutputFile>
-      ${HOME}/dds/log/cdds.log.${CYCLONEDDS_PID}</OutputFile>
-    </Tracing>
   </Domain>
 </CycloneDDS>

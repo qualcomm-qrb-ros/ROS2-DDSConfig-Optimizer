@@ -8,6 +8,7 @@ does the actual latency/throughput measurement; this node just provides a
 realistic subscriber on the topic and logs receipt counts.
 """
 import rclpy
+from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy
 from std_msgs.msg import Header
@@ -36,11 +37,14 @@ class Listener(Node):
 
 
 def main(args=None):
+    # A SIGINT/SIGTERM from launch_test (or a plain Ctrl-C) surfaces as
+    # KeyboardInterrupt or ExternalShutdownException. Catch both so the node
+    # shuts down cleanly and exits 0 instead of dumping a traceback.
     rclpy.init(args=args)
     node = Listener()
     try:
         rclpy.spin(node)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
         node.destroy_node()
