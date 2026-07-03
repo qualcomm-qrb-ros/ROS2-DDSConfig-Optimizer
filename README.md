@@ -3,7 +3,7 @@
 # ROS2 DDSConfig Optimizer
 
 [![ROS](https://img.shields.io/badge/ROS-Humble%20%7C%20Jazzy-green)](https://www.ros.org/)
-[![DDS](https://img.shields.io/badge/DDS-FastDDS-orange)](https://fast-dds.docs.eprosima.com/)
+[![DDS](https://img.shields.io/badge/DDS-FastDDS_2.14.5%20%7C%20CycloneDDS_0.10.5-orange)](https://fast-dds.docs.eprosima.com/)
 [![License](https://img.shields.io/badge/License-BSD--3--Clause-blue)](#license)
 
 <p>
