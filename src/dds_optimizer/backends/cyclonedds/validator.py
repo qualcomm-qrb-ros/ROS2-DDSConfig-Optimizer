@@ -11,6 +11,7 @@ a missing file or malformed XML is a hard error.
 """
 
 import xml.etree.ElementTree as ET
+from defusedxml.ElementTree import parse as safe_parse
 from pathlib import Path
 from typing import List
 
@@ -36,7 +37,7 @@ def validate_cyclonedds_config(config_path: Path) -> List[str]:
         raise CycloneConfigValidationError(f"Config path is not a file: {config_path}")
 
     try:
-        tree = ET.parse(config_path)
+        tree = safe_parse(config_path)
     except ET.ParseError as e:
         raise CycloneConfigValidationError(
             f"Malformed CycloneDDS XML '{config_path}': {e}"

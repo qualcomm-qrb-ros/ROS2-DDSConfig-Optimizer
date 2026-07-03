@@ -43,6 +43,7 @@ The XML file format is:
 """
 
 import xml.etree.ElementTree as ET
+from defusedxml.ElementTree import parse as safe_parse
 from pathlib import Path
 from typing import Optional
 
@@ -345,7 +346,7 @@ def parse_requirements(xml_path: str) -> RequirementsConfig:
         raise ValueError(f"Requirements path is not a file: {xml_path}")
 
     try:
-        tree = ET.parse(xml_path)
+        tree = safe_parse(xml_path)
     except ET.ParseError as e:
         raise ValueError(f"Failed to parse XML file '{xml_path}': {e}") from e
 

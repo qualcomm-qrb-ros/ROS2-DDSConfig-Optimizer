@@ -13,6 +13,7 @@ Checks:
 """
 
 import xml.etree.ElementTree as ET
+from defusedxml.ElementTree import parse as safe_parse
 from pathlib import Path
 from typing import List
 
@@ -57,7 +58,7 @@ def validate_config(config_path: Path) -> List[str]:
 
     # Parse XML
     try:
-        tree = ET.parse(config_path)
+        tree = safe_parse(config_path)
     except ET.ParseError as e:
         raise ConfigValidationError(f"Config file is not valid XML: {e}")
 

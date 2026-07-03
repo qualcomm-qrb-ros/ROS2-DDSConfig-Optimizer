@@ -16,6 +16,7 @@ Endpoints:
 The dashboard frontend is a single-page HTML file served from the frontend/ directory.
 """
 
+import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -57,10 +58,18 @@ def create_app():
         version="1.0.0",
     )
 
-    # Allow CORS for local development
+    # Restrict CORS to local dashboard origins by default. Override with the
+    # DDS_OPTIMIZER_CORS_ORIGINS env var (comma-separated) if the dashboard is
+    # served from a different host. A wildcard "*" is intentionally avoided.
+    default_origins = "http://localhost:5000,http://127.0.0.1:5000"
+    allowed_origins = [
+        o.strip()
+        for o in os.environ.get("DDS_OPTIMIZER_CORS_ORIGINS", default_origins).split(",")
+        if o.strip()
+    ]
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=allowed_origins,
         allow_methods=["GET"],
         allow_headers=["*"],
     )

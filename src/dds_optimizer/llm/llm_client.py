@@ -447,10 +447,21 @@ def _call_plugin_provider(prompt: str, llm_config: LLMConfig, api_key: str) -> s
         RuntimeError: If the provider call fails.
     """
     import importlib
+    import re
     import sys
     from pathlib import Path
 
     module_path = llm_config.plugin_module
+
+    # Security: only allow well-formed dotted module names (e.g. "pkg.sub.mod").
+    # This prevents importlib.import_module() from being abused to load arbitrary
+    # code via path traversal or injected characters from the requirements XML.
+    if not module_path or not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*", module_path):
+        raise ValueError(
+            f"Invalid plugin_module '{module_path}'. Expected a dotted Python "
+            "module path such as 'my_pkg.my_provider'."
+        )
+
     logger.info(f"Loading LLM provider plugin: {module_path}")
 
     # Ensure the project root (cwd) is on sys.path so that plugin modules
