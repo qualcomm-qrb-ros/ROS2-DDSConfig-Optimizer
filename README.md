@@ -16,6 +16,7 @@
 
 <p>
   <a href="#overview">Overview</a> •
+  <a href="#improvement-showcase">Improvement Showcase</a> •
   <a href="#requirements">Requirements</a> •
   <a href="#usage">Usage</a> •
   <a href="#contributing">Contributing</a> •
@@ -46,6 +47,42 @@ ROS2 DDSConfig Optimizer is here to help! It uses LLMs to automatically tune DDS
 😆Finially, you will get an optimized DDS configuration tailored to your ROS 2 application.
 
 ---
+
+## Improvement Showcase
+
+We simulated a multi-sensor graph running on a Qualcomm device, comprising **10 nodes** and **27 topics** — the kind that is painful to tune by hand:
+
+<p>
+  <img src="./data/images/improvement-result-pipeline.png" width="100%" alt="improvement-result-pipeline">
+</p>
+
+**Why this is hard to tune manually:**
+
+- **140+** DDS configurable parameters — it is unclear which ones even need tuning.
+- **27** topics and **9** message types of different sizes — tuning them by hand takes a huge amount of time.
+
+However, don’t worry — we can use ROS2-DDSConfig-Optimizer for tuning. We use the **anthropic/claude-sonnet-4.6** model, set **max_iterations to 5**, and then start optimizing only for **latency** and **packet loss**.
+
+Let's see the performance comparison:
+
+| Metric            | Baseline (default config) | After optimization | Change     |
+| ----------------- | ------------------------- | ------------------ | ---------- |
+| Mean E2E latency  | 122.6 ms                  | **86.3 ms**        | **−29.6%** |
+| p95 / p99 latency | 228.0 ms                  | **159.5 ms**       | **−30.0%** |
+| Packet loss       | 7.5 %                     | **0.4 %**          | −7.1 pts   |
+
+As the numbers show, ROS2-DDSConfig-Optimizer delivers a substantial, real performance gain — cutting mean end-to-end latency by nearly 30% and bringing packet loss under the 1% target, all **without a single manual edit** to the DDS configuration.
+
+The table below compares manual tuning with ROS2-DDSConfig-Optimizer across several dimensions:
+
+| Dimension | Manual tuning | ROS2-DDSConfig-Optimizer |
+|---|---|---|
+| Human involvement | Expert trial-and-error throughout | One command, zero intervention |
+| Time cost | Hours to days | Minutes (5 rounds, fully automated) |
+| DDS / networking expertise | Required, and deep | Not required |
+| Parameter-space coverage | A few parameters by intuition | Systematically explores 40+ per round |
+| Reproducibility | Person-dependent, hard to reproduce | Every config + reasoning logged |
+
 
 ## Requirements
 
