@@ -92,6 +92,9 @@ The table below compares manual tuning with ROS2-DDSConfig-Optimizer across seve
 | **ROS 2** | Humble, Jazzy |
 | **Package manager** | [uv](https://docs.astral.sh/uv/) ≥ 0.7.8 |
 
+> **Note:** This package is not published on PyPI. Do not use `pip install ros2-ddsconfig-optimizer`.
+> Always install from source using `uv sync` as shown below.
+
 ---
 
 ## Usage
